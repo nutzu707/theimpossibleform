@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 
+// ... countryList and countryNeighbors unchanged ...
+
 const countryList = [
   // ... (unchanged, omitted for brevity)
   "Afghanistan",
@@ -201,8 +203,6 @@ const countryList = [
   "Zimbabwe"
 ];
 
-// Map of country to number of land neighbors (for the countries in the list above)
-// Note: For countries with no land borders, value is 0
 const countryNeighbors: { [country: string]: number } = {
   // ... (unchanged, omitted for brevity)
   "Afghanistan": 6,
@@ -551,14 +551,12 @@ function safeEval(expr: string): number | null {
   // Only allow digits, spaces, +, -, *, /, and parentheses
   if (!/^[\d\s+\-*/()]+$/.test(expr)) return null;
   try {
-    // eslint-disable-next-line no-new-func
     // Use Function constructor for safe evaluation (no variables, only math)
     // Remove double operators, e.g. "++", "--", etc.
     if (/[\+\-\*\/]{2,}/.test(expr.replace(/\s+/g, ""))) return null;
     // Remove leading/trailing operators
     if (/^[\+\*\/]/.test(expr.trim()) || /[\+\-\*\/]$/.test(expr.trim())) return null;
     // Evaluate
-    // eslint-disable-next-line no-new-func
     const fn = new Function(`return (${expr})`);
     const result = fn();
     if (typeof result === "number" && isFinite(result)) {
@@ -893,40 +891,35 @@ function TermsModal({
 }
 
 export default function TheImpossibleForm() {
-  const [values, setValues] = useState<ValuesType>(
-    fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
-  );
-  // Add state for the math equation field
-  const [mathEquation, setMathEquation] = useState<string>("");
-  // Add state for country
-  const [country, setCountry] = useState<string>("");
-  // Add state for neighbors
-  const [neighbors, setNeighbors] = useState<string>("");
+  // Helper to generate a random 5-character code
+  function generateRandomCode() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
 
-  // New: state for submit error message
-  const [submitError, setSubmitError] = useState<string>("");
-  // New: state for congratulations message
-  const [congrats, setCongrats] = useState<boolean>(false);
-
-  // New: state for terms and conditions checkbox
-  const [termsChecked, setTermsChecked] = useState<boolean>(false);
-
-  // New: state for terms modal
-  const [termsModalOpen, setTermsModalOpen] = useState<boolean>(false);
-
-  // New: state for captcha code
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [captchaCode, setCaptchaCode] = useState<string>(generateRandomCode());
-  const [captchaInput, setCaptchaInput] = useState<string>("");
-
-  // New: state for morse code challenge
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [morseInput, setMorseInput] = useState<string>("");
-
-  // Timer state
-  const [timer, setTimer] = useState<number>(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [timerStopped, setTimerStopped] = useState<boolean>(false);
+  // Google Maps locations
+  const mapLocations = [
+    {
+      country: "Romania",
+      src: "https://www.google.com/maps/embed?pb=!4v1750509378155!6m8!1m7!1sQbpJo3AqW_v2vivRJdp5Rg!2m2!1d46.96870856179091!2d25.15226356180779!3f299.9146786156652!4f-0.34119820018321434!5f0.7820865974627469"
+    },
+    {
+      country: "Japan",
+      src: "https://www.google.com/maps/embed?pb=!4v1750509477498!6m8!1m7!1sVaLI51zQHIpT7Nlf7WlqjQ!2m2!1d34.50471328179037!2d135.5957048743215!3f64.82174331187719!4f-15.163396811668761!5f0.7820865974627469"
+    },
+    {
+      country: "Turkey",
+      src: "https://www.google.com/maps/embed?pb=!4v1750514318829!6m8!1m7!1svjithIMrCYU9UOJ9wCnkOw!2m2!1d39.46225319660574!2d38.55973595476882!3f243.9739855805657!4f6.313731241209595!5f0.7820865974627469"
+    },
+    {
+      country: "India",
+      src: "https://www.google.com/maps/embed?pb=!4v1750514408770!6m8!1m7!1sjVNgyY9SEyqmlJoyYAchAg!2m2!1d20.38375198587597!2d78.13757081524331!3f3.437396480743509!4f-0.7706907875102047!5f0.7820865974627469"
+    }
+  ];
 
   // Morse code sentences and their translations
   const morseSentences = [
@@ -952,9 +945,41 @@ export default function TheImpossibleForm() {
     { sentence: "rain is wet", morse: ".-. .- .. -. / .. ... / .-- . -" },
   ];
 
+  // --- State hooks ---
+  const [values, setValues] = useState<ValuesType>(
+    fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
+  );
+  const [mathEquation, setMathEquation] = useState<string>("");
+  const [country, setCountry] = useState<string>("");
+  const [neighbors, setNeighbors] = useState<string>("");
+
+  const [submitError, setSubmitError] = useState<string>("");
+  const [congrats, setCongrats] = useState<boolean>(false);
+
+  const [termsChecked, setTermsChecked] = useState<boolean>(false);
+  const [termsModalOpen, setTermsModalOpen] = useState<boolean>(false);
+
+  // Fix: generateRandomCode must be defined before useState
+  // eslint-disable-next-line 
+  const [captchaCode, setCaptchaCode] = useState<string>(() => generateRandomCode());
+  const [captchaInput, setCaptchaInput] = useState<string>("");
+
+  const [morseInput, setMorseInput] = useState<string>("");
+  const [googleMapsInput, setGoogleMapsInput] = useState<string>("");
+
+  // Timer state
+  const [timer, setTimer] = useState<number>(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [timerStopped, setTimerStopped] = useState<boolean>(false);
+
   // Randomly select a morse sentence
   const selectedMorse = useMemo(() => {
     return morseSentences[Math.floor(Math.random() * morseSentences.length)];
+  }, []);
+
+  // Randomly select a map location
+  const selectedMap = useMemo(() => {
+    return mapLocations[Math.floor(Math.random() * mapLocations.length)];
   }, []);
 
   // Start timer on mount
@@ -1091,7 +1116,8 @@ export default function TheImpossibleForm() {
     (age !== null && age > 19) ||
     !termsChecked || // Add termsChecked to disable submit if not checked
     captchaInput !== captchaCode || // Add captcha validation
-    morseInput !== selectedMorse.morse; // Add morse code validation
+    morseInput !== selectedMorse.morse || // Add morse code validation
+    googleMapsInput.toLowerCase() !== selectedMap.country.toLowerCase(); // Add Google Maps validation
 
   // Handler for submit button
   const handleSubmit = (e: React.FormEvent) => {
@@ -1104,6 +1130,8 @@ export default function TheImpossibleForm() {
         setSubmitError("Captcha code is incorrect.");
       } else if (morseInput !== selectedMorse.morse) {
         setSubmitError("Morse code is incorrect.");
+      } else if (googleMapsInput.toLowerCase() !== selectedMap.country.toLowerCase()) {
+        setSubmitError("Google Maps country is incorrect.");
       } else {
         setSubmitError("Please complete all fields correctly before submitting.");
       }
@@ -1119,23 +1147,13 @@ export default function TheImpossibleForm() {
     if (submitError) setSubmitError("");
     if (congrats) setCongrats(false);
     // eslint-disable-next-line
-  }, [values, mathEquation, country, neighbors, termsChecked, captchaInput, morseInput]);
+  }, [values, mathEquation, country, neighbors, termsChecked, captchaInput, morseInput, googleMapsInput]);
 
   // Helper to format timer as mm:ss
   function formatTimer(seconds: number) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-
-  // Helper to generate a random 5-character code
-  function generateRandomCode() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 5; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
   }
 
   // --- Blur effect for modal ---
@@ -1308,6 +1326,41 @@ export default function TheImpossibleForm() {
               <div className="text-red-500 text-base">{neighborsError}</div>
             )}
           </React.Fragment>
+        )}
+
+        {/* Google Maps challenge: show only after all inputs are valid and before morse code */}
+        {allInputsValid && (
+          <div className="flex flex-col items-center mt-4">
+            <div className="text-lg font-bold mb-2">
+              Identify the country from this Google Street View:
+            </div>
+            <iframe
+              src={selectedMap.src}
+              width="600"
+              height="450"
+              style={{ border: 0 }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              frameBorder="0"
+              tabIndex={0}
+            ></iframe>
+            <input
+              id="googleMaps"
+              name="googleMaps"
+              type="text"
+              className="border-2 border-gray-300 rounded-md p-3 text-lg mt-2"
+              placeholder="Enter the country name"
+              value={googleMapsInput}
+              onChange={e => setGoogleMapsInput(e.target.value)}
+              autoComplete="off"
+            />
+            {googleMapsInput.toLowerCase() !== selectedMap.country.toLowerCase() && googleMapsInput.length > 0 && (
+              <div className="text-red-500 text-base">
+                Google Maps country is incorrect.
+              </div>
+            )}
+          </div>
         )}
 
         {/* Morse code challenge: show only after all inputs are valid and before captcha */}
