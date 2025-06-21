@@ -1265,7 +1265,7 @@ export default function TheImpossibleForm() {
                 )}
                 {field.name === "birthdate" && values["birthdate"] && new Date(values["birthdate"]) > new Date(maxBirthdate) && (
                   <div className="text-red-500 text-base">
-                    You can't be born in the future!
+                    You can&apos;t be born in the future!
                   </div>
                 )}
               </React.Fragment>
