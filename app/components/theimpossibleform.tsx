@@ -1160,6 +1160,16 @@ export default function TheImpossibleForm() {
   // If modal is open, blur the form
   const blurClass = termsModalOpen ? "blur-sm pointer-events-none select-none" : "";
 
+  // --- Get today's date in YYYY-MM-DD format for max birthdate ---
+  function getTodayDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  const maxBirthdate = getTodayDateString();
+
   return (
     <>
       {/* Terms Modal */}
@@ -1195,6 +1205,7 @@ export default function TheImpossibleForm() {
                   value={values[field.name]}
                   onChange={handleChange}
                   autoComplete="off"
+                  {...(field.name === "birthdate" ? { max: maxBirthdate } : {})}
                 />
                 {field.name === "firstname" && firstnameHasNumber && (
                   <div className="text-red-500 text-base">
@@ -1250,6 +1261,11 @@ export default function TheImpossibleForm() {
                 {field.name === "birthdate" && age !== null && age > 19 && (
                   <div className="text-red-500 text-base">
                     You are too old for this game
+                  </div>
+                )}
+                {field.name === "birthdate" && values["birthdate"] && new Date(values["birthdate"]) > new Date(maxBirthdate) && (
+                  <div className="text-red-500 text-base">
+                    You can't be born in the future!
                   </div>
                 )}
               </React.Fragment>
